@@ -55,6 +55,12 @@ Akka.NET style. by akkadotnet.github.com
   color: #fff0a0;
 }
 
+.hljs-pi {
+  color: #808080;
+}
+
+
+
 .hljs-link_url {
   font-size: 80%;
 }
