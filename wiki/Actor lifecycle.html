@@ -4,7 +4,7 @@
 <!--[if gt IE 9]><!-->	<html> <!--<![endif]-->
 	<head>
 		<meta charset="utf-8" />
-		<title>Our team | Akka.NET</title>
+		<title>Actor lifecycle | Akka.NET</title>
 		<meta name="keywords" content="Actor,Finite state machine, concurrency" />
 		<meta name="description" content="" />
 		<meta name="Author" content="Dorin Grigoras [www.stepofweb.com]" />
@@ -165,198 +165,142 @@
 			</div>
 
 			
-<!-- PAGE TOP -->
-<section class="page-title">
-	<div class="container">
+			<!-- PAGE TOP -->
+			<section class="page-title">
+				<div class="container">
 
-		<header>
+					<header>
 
-			<ul class="breadcrumb"><!-- breadcrumb -->
-				<li><a href="#">Pages</a></li>
-				<li class="active">About Our Team</li>
-			</ul><!-- /breadcrumb -->
+						<ul class="breadcrumb"><!-- breadcrumb -->
+							<li><a href="/">Home</a></li>
+							<li><a href="/wiki/">Wiki</a></li>
+							<li class="active">{% if page.title %} Actor lifecycle {% endif %} <a href="https://github.com/akkadotnet/akka.net/edit/dev/documentation/wiki/Actor lifecycle.md" > (edit)</a></li>							
+						</ul><!-- /breadcrumb -->
 
-			<h2><!-- Page Title -->
-				<strong>About</strong> Our Team
-			</h2><!-- /Page Title -->
+						<h2><!-- Page Title -->
+							<strong>Akka.NET</strong> Wiki
+						</h2><!-- /Page Title -->
 
-		</header>
+					</header>
 
-	</div>
-</section>
-<!-- /PAGE TOP -->
+				</div>			
+			</section>
+			<!-- /PAGE TOP -->
 
-<section class="callout dark">
-<div class="container">
+			<!-- CONTENT -->
+			<section>
+				<div class="container">
 
-	<div class="row">
-		<div class="col-md-12">
-		<i class="fa fa-warning"></i>
-		This is a community driven port and is not affiliated with <a href="http://typesafe.com">Typesafe</a> who makes the original Java/Scala version of <a href="http://akka.io">Akka</a>.<br/>
-		</div>
-	</div>
-</section>
+					<div class="row">
 
-<section>
-	<div class="container">
+						<!-- RIGHT COLUMNS -->
+						<div class="col-md-3" id="toc">	
+						</div>
+						<!-- /RIGHT COLUMNS -->
 
-		<p class="lead">Meet the core Akka.NET team below.</p>
+						<!-- LEFT COLUMNS -->
+						<div class="col-md-9">
+							<div id="main_content">
 
+								<div class="mybold"><h2 id="actor-lifecycle">Actor Lifecycle</h2>
+<p><img class="img-responsive" src="images/actor_lifecycle.png" alt="Actor lifecycle"></p>
+<p>A path in an actor system represents a &quot;place&quot; which might be occupied by a living actor. Initially (apart from system initialized actors) a path is empty. When <code>ActorOf()</code> is called it assigns an incarnation of the actor described by the passed <code>Props</code> to the given path. An actor incarnation is identified by the path and a UID. A restart only swaps the Actor instance defined by the Props but the incarnation and hence the UID remains the same.</p>
+<p>The lifecycle of an incarnation ends when the actor is stopped. At that point the appropriate lifecycle events are called and watching actors are notified of the termination. After the incarnation is stopped, the path can be reused again by creating an actor with <code>ActorOf()</code>. In this case the name of the new incarnation will be the same as the previous one but the UIDs will differ.</p>
+<p>An <code>ActorRef</code> always represents an incarnation (path and UID) not just a given path. Therefore if an actor is stopped and a new one with the same name is created an ActorRef of the old incarnation will not point to the new one.</p>
+<p><code>ActorSelection</code> on the other hand points to the path (or multiple paths if wildcards are used) and is completely oblivious to which incarnation is currently occupying it. <code>ActorSelection</code> cannot be watched for this reason. It is possible to resolve the current incarnation&#39;s ActorRef living under the path by sending an <code>Identify</code> message to the <code>ActorSelection</code> which will be replied to with an <code>ActorIdentity</code> containing the correct reference (see Identifying Actors via Actor Selection). This can also be done with the resolveOne method of the <code>ActorSelection</code>, which returns a <code>Task</code> of the matching <code>ActorRef</code>.</p>
+<h3 id="lifecycle-monitoring-aka-deathwatch">Lifecycle Monitoring aka DeathWatch</h3>
+<p>In order to be notified when another actor terminates (i.e. stops permanently, not temporary failure and restart), an actor may register itself for reception of the Terminated message dispatched by the other actor upon termination (see Stopping Actors). This service is provided by the DeathWatch component of the actor system.</p>
+<p>Registering a monitor is easy (see fourth line, the rest is for demonstrating the whole functionality):</p>
+<pre><code class="hljs lang-csharp"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title">WatchActor</span> : <span class="hljs-title">UntypedActor</span>
+{
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">WatchActor</span><span class="hljs-params">()</span>
+    </span>{
+        Context.Watch(child);
+    }
 
-		<div class="row">
+    ActorRef child = Context.ActorOf(Props.Empty, <span class="hljs-string">"child"</span>);
+    ActorRef lastSender = Context.System.DeadLetters;
 
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars3.githubusercontent.com/u/647031?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
+    <span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">override</span> <span class="hljs-keyword">void</span> <span class="hljs-title">OnReceive</span><span class="hljs-params">(<span class="hljs-keyword">object</span> message)</span>
+    </span>{
+        <span class="hljs-keyword">if</span> (message.Equals(<span class="hljs-string">"kill"</span>))
+        {
+            Context.Stop(child);
+            lastSender = Sender;
+        }
+        <span class="hljs-function"><span class="hljs-keyword">else</span> <span class="hljs-title">if</span> <span class="hljs-params">(message <span class="hljs-keyword">is</span> Terminated)</span>
+        </span>{
+            <span class="hljs-keyword">var</span> t = (Terminated)message;
 
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Roger Alsing
-									<small class="block">Founder / Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/rogeralsing" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/rogeralsing" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
+            <span class="hljs-keyword">if</span> (t.ActorRef == child)
+            {
+                lastSender.Tell(<span class="hljs-string">"finished"</span>);
+            }
+        }
+        <span class="hljs-keyword">else</span>
+        {
+            Unhandled(message);
+        }
+    }
+}
+</code></pre>
+<p>It should be noted that the Terminated message is generated independent of the order in which registration and termination occur. In particular, the watching actor will receive a Terminated message even if the watched actor has already been terminated at the time of registration.</p>
+<p>Registering multiple times does not necessarily lead to multiple messages being generated, but there is no guarantee that only exactly one such message is received: if termination of the watched actor has generated and queued the message, and another registration is done before this message has been processed, then a second message will be queued, because registering for monitoring of an already terminated actor leads to the immediate generation of the Terminated message.</p>
+<p>It is also possible to deregister from watching another actor’s liveliness using Context.Unwatch(target). This works even if the Terminated message has already been enqueued in the mailbox; after calling unwatch no Terminated message for that actor will be processed anymore.</p>
+<h3 id="start-hook">Start Hook</h3>
+<p>Right after starting the actor, its PreStart method is invoked.</p>
+<pre><code class="hljs lang-csharp"><span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">override</span> <span class="hljs-keyword">void</span> <span class="hljs-title">PreStart</span><span class="hljs-params">()</span>
+</span>{
+    child = Context.ActorOf(Props.Empty);
+}
+</code></pre>
+<p>This method is called when the actor is first created. During restarts it is called by the default implementation of postRestart, which means that by overriding that method you can choose whether the initialization code in this method is called only exactly once for this actor or for every restart. Initialization code which is part of the actor’s constructor will always be called when an instance of the actor class is created, which happens at every restart.</p>
+<h3 id="restart-hooks">Restart Hooks</h3>
+<p>All actors are supervised, i.e. linked to another actor with a fault handling strategy. Actors may be restarted in case an exception is thrown while processing a message (see Supervision and Monitoring). This restart involves the hooks mentioned above:</p>
+<p>The old actor is informed by calling preRestart with the exception which caused the restart and the message which triggered that exception; the latter may be None if the restart was not caused by processing a message, e.g. when a supervisor does not trap the exception and is restarted in turn by its supervisor, or if an actor is restarted due to a sibling’s failure. If the message is available, then that message’s sender is also accessible in the usual way (i.e. by calling the Sender property).</p>
+<p>This method is the best place for cleaning up, preparing hand-over to the fresh actor instance, etc. By default it stops all children and calls postStop.</p>
+<p>The initial factory from the actorOf call is used to produce the fresh instance.</p>
+<p>The new actor’s postRestart method is invoked with the exception which caused the restart. By default the preStart is called, just as in the normal start-up case.</p>
+<p>An actor restart replaces only the actual actor object; the contents of the mailbox is unaffected by the restart, so processing of messages will resume after the postRestart hook returns. The message that triggered the exception will not be received again. Any message sent to an actor while it is being restarted will be queued to its mailbox as usual.</p>
+<div class="alert alert-warning">
+<p><strong>Warning</strong><br/>
+Be aware that the ordering of failure notifications relative to user messages is not deterministic. In particular, a parent might restart its child before it has processed the last messages sent by the child before the failure. See Discussion: Message Ordering for details.</p>
+</div>
+<h3 id="stop-hook">Stop Hook</h3>
+<p>After stopping an actor, its postStop hook is called, which may be used e.g. for deregistering this actor from other services. This hook is guaranteed to run after message queuing has been disabled for this actor, i.e. messages sent to a stopped actor will be redirected to the deadLetters of the ActorSystem.</p>
+</div> 
+
+								<div class="sky-form boxed">
+									<header>Leave a comment</header>
+									<div style="padding:12px;">
+									<div id="disqus_thread"></div>
+					                <script type="text/javascript">
+					                    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+					                    var disqus_shortname = 'akkanet'; // required: replace example with your forum shortname
+
+					                    /* * * DON'T EDIT BELOW THIS LINE * * */
+					                    (function () {
+					                        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+					                        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+					                        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+					                    })();
+					                </script>
+					                <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+					                <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+						            </div>
+						        </div>
 							</div>
 
 						</div>
+						<!-- /LEFT COLUMNS -->
 
-						<p class="noborder nomargin nopadding">Roger is the original creator of the Akka.NET project. C# developer and mentor living in Sweden. Open source enthusiast. Started programming at the age of 10 on the mighty Commodore64. <a href="http://twitter.com/rogeralsing">Follow Roger on Twitter</a> or at his <a href="http://rogeralsing.com/">personal blog</a>. Works at <a href="http://Nethouse.se">Nethouse.se</a></p>
+
+
 					</div>
+
 				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars0.githubusercontent.com/u/326939?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Aaron Stannard
-									<small class="block">Founder / Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/aaronontheweb" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/aaronontheweb" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">Aaron is Founder and CTO at <a href="http://petabridge.com">Petabridge, a .NET data platform company</a>. Aaron's one of the original contributors to Akka.NET, authoring the Akka.Remote module and Helios, the underlying socket server. Prior to working at Petabridge Aaron founded MarkedUp Analytics, a Cassandra and Akka.NET-powered real-time app analytics and marketing automation company for app developers.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars0.githubusercontent.com/u/800302?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Håkan Canberger
-									<small class="block">Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/hcanber" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/hcanber" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">Håkan developed the Akka.NET TestKit and internals, and by day is a developer & architect at <a href="http://www.ving.se/">Thomas Cook</a>. Follow Håkan <a href="https://twitter.com/hcanber">on Twitter</a> or at <a href="http://blog.canberger.se/">his personal blog</a>.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars0.githubusercontent.com/u/679705?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Bartosz Sypytkowski
-									<small class="block">Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/Horusiath" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/Horusiath" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">Bartosz wrote the Akka.NET F# API, and works at <a href="http://rd.samsung.pl/?lang=en">Samsung R&D, Poland</a>. Follow <a href="https://twitter.com/horusiath">Bartosz on Twitter</a> or at <a href="http://bartoszsypytkowski.com/">his personal blog</a>.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars2.githubusercontent.com/u/1242903?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">David Smith
-									<small class="block">Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/smalldave" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/smalldave" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">David contributed Akka.Cluster and MultiNodeTestkit, and is a developer at <a href="https://www.travelrepublic.co.uk/">Travel Republic</a> in the UK. Follow David on <a href="https://github.com/smalldave">GitHub</a>.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars0.githubusercontent.com/u/146717?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Jérémie Chassaing
-									<small class="block">Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/thinkb4coding" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/thinkbeforecoding" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">Jérémie is an F# developer hailing from Paris, France. Follow him on <a href="https://twitter.com/thinkb4coding">Twitter</a> or at his personal blog, <a href="http://thinkbeforecoding.com/">Think Before Coding</a>.</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
+			</section>
+			<!-- /CONTENT -->
 
 
 

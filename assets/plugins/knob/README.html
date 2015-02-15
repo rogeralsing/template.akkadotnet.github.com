@@ -4,7 +4,7 @@
 <!--[if gt IE 9]><!-->	<html> <!--<![endif]-->
 	<head>
 		<meta charset="utf-8" />
-		<title>Our team | Akka.NET</title>
+		<title> | Akka.NET</title>
 		<meta name="keywords" content="Actor,Finite state machine, concurrency" />
 		<meta name="description" content="" />
 		<meta name="Author" content="Dorin Grigoras [www.stepofweb.com]" />
@@ -164,200 +164,140 @@
 
 			</div>
 
-			
-<!-- PAGE TOP -->
-<section class="page-title">
-	<div class="container">
+			jQuery Knob
+=============
 
-		<header>
+- canvas based ; no png or jpg sprites.
+- touch, mouse and mousewheel, keyboard events implemented.
+- downward compatible ; overloads an input element.
 
-			<ul class="breadcrumb"><!-- breadcrumb -->
-				<li><a href="#">Pages</a></li>
-				<li class="active">About Our Team</li>
-			</ul><!-- /breadcrumb -->
+Example
+-------
 
-			<h2><!-- Page Title -->
-				<strong>About</strong> Our Team
-			</h2><!-- /Page Title -->
+    <input type="text" value="75" class="dial">
 
-		</header>
+    <script>
+    $(function() {
+        $(".dial").knob();
+    });
+    </script>
 
-	</div>
-</section>
-<!-- /PAGE TOP -->
+Options
+-------
 
-<section class="callout dark">
-<div class="container">
+Options are provided as attributes 'data-option':
 
-	<div class="row">
-		<div class="col-md-12">
-		<i class="fa fa-warning"></i>
-		This is a community driven port and is not affiliated with <a href="http://typesafe.com">Typesafe</a> who makes the original Java/Scala version of <a href="http://akka.io">Akka</a>.<br/>
-		</div>
-	</div>
-</section>
+    <input type="text" class="dial" data-min="-50" data-max="50">
 
-<section>
-	<div class="container">
+... or in the "knob()" call :
 
-		<p class="lead">Meet the core Akka.NET team below.</p>
+    $(".dial").knob({
+                    'min':-50
+                    ,'max':50
+                    });
+
+The following options are supported :
+
+Behaviors :
+* min : min value | default=0.
+* max : max value | default=100.
+* step : step size | default=1.
+* angleOffset : starting angle in degrees | default=0.
+* angleArc : arc size in degrees | default=360.
+* stopper : stop at min & max on keydown/mousewheel | default=true.
+* readOnly : disable input and events | default=false.
+
+UI :
+* cursor : display mode "cursor", cursor size could be changed passing a numeric value to the option, default width is used when passing boolean value "true" | default=gauge.
+* thickness : gauge thickness.
+* lineCap : gauge stroke endings. | default=butt, round=rounded line endings
+* width : dial width.
+* displayInput : default=true | false=hide input.
+* displayPrevious : default=false | true=displays the previous value with transparency.
+* fgColor : foreground color.
+* inputColor : input value (number) color.
+* font : font family.
+* fontWeight : font weight.
+* bgColor : background color.
+
+Hooks
+-------
+
+    <script>
+    $(".dial").knob({
+                        'release' : function (v) { /*make something*/ }
+                    });
+    </script>
+
+* 'release' : executed on release
+
+    Parameters :
+    + value : int, current value
+
+* 'change' : executed at each change of the value
+
+    Parameters :
+    + value : int, current value
+
+* 'draw' : when drawing the canvas
+
+    Context :
+    - this.g : canvas context 2D (see Canvas documentation)
+    - this.$ : jQuery wrapped element
+    - this.o : options
+    - this.i : input
+    - ... console.log(this);
+
+* 'cancel' : triggered on [esc] keydown
+
+* 'error' : called if the browser doesn't support canvases and the plugin didn't initialize as a result
+
+The scope (this) of each hook function is the current Knob instance (refer to the demo code).
+
+Example
+-------
+
+    <input type="text" value="75" class="dial">
+
+    <script>
+    $(".dial").knob({
+                     'change' : function (v) { console.log(v); }
+                    });
+    </script>
 
 
-		<div class="row">
+Dynamically configure
+-------
 
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars3.githubusercontent.com/u/647031?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
+    <script>
+    $('.dial')
+        .trigger(
+            'configure',
+            {
+            "min":10,
+            "max":40,
+            "fgColor":"#FF0000",
+            "skin":"tron",
+            "cursor":true
+            }
+        );
+    </script>
 
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Roger Alsing
-									<small class="block">Founder / Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/rogeralsing" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/rogeralsing" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
+Set the value
+-------
 
-						</div>
+    <script>
+    $('.dial')
+        .val(27)
+        .trigger('change');
+    </script>
 
-						<p class="noborder nomargin nopadding">Roger is the original creator of the Akka.NET project. C# developer and mentor living in Sweden. Open source enthusiast. Started programming at the age of 10 on the mighty Commodore64. <a href="http://twitter.com/rogeralsing">Follow Roger on Twitter</a> or at his <a href="http://rogeralsing.com/">personal blog</a>. Works at <a href="http://Nethouse.se">Nethouse.se</a></p>
-					</div>
-				</div>
-			</div>
+Supported browser
+-------
 
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars0.githubusercontent.com/u/326939?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
+Tested on Chrome, Safari, Firefox, IE>=8.0 (IE8.0 with excanvas).
 
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Aaron Stannard
-									<small class="block">Founder / Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/aaronontheweb" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/aaronontheweb" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">Aaron is Founder and CTO at <a href="http://petabridge.com">Petabridge, a .NET data platform company</a>. Aaron's one of the original contributors to Akka.NET, authoring the Akka.Remote module and Helios, the underlying socket server. Prior to working at Petabridge Aaron founded MarkedUp Analytics, a Cassandra and Akka.NET-powered real-time app analytics and marketing automation company for app developers.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars0.githubusercontent.com/u/800302?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Håkan Canberger
-									<small class="block">Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/hcanber" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/hcanber" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">Håkan developed the Akka.NET TestKit and internals, and by day is a developer & architect at <a href="http://www.ving.se/">Thomas Cook</a>. Follow Håkan <a href="https://twitter.com/hcanber">on Twitter</a> or at <a href="http://blog.canberger.se/">his personal blog</a>.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars0.githubusercontent.com/u/679705?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Bartosz Sypytkowski
-									<small class="block">Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/Horusiath" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/Horusiath" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">Bartosz wrote the Akka.NET F# API, and works at <a href="http://rd.samsung.pl/?lang=en">Samsung R&D, Poland</a>. Follow <a href="https://twitter.com/horusiath">Bartosz on Twitter</a> or at <a href="http://bartoszsypytkowski.com/">his personal blog</a>.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars2.githubusercontent.com/u/1242903?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">David Smith
-									<small class="block">Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/smalldave" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/smalldave" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">David contributed Akka.Cluster and MultiNodeTestkit, and is a developer at <a href="https://www.travelrepublic.co.uk/">Travel Republic</a> in the UK. Follow David on <a href="https://github.com/smalldave">GitHub</a>.</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-sm-4 col-md-3 fadeInUpBig"><!-- member -->
-				<div class="box-content thumbnail text-center">
-					<span class="item-image">
-						<img class="img-responsive" src="https://avatars0.githubusercontent.com/u/146717?v=2&amp;s=460" alt="">
-					</span>
-					<div class="caption text-left">
-
-						<div class="clearfix margin-bottom10">
-							<div class="pull-left">
-								<h4 class="nomargin">Jérémie Chassaing
-									<small class="block">Core team</small>
-								</h4>
-							</div>
-							<div class="pull-right">
-								<a href="http://twitter.com/thinkb4coding" class="btn ico-only btn-twitter btn-xs"><i class="fa fa-twitter"></i></a>
-								<a href="https://github.com/thinkbeforecoding" class="btn ico-only btn-stackoverflow btn-xs"><i class="fa fa-github"></i></a>
-							</div>
-
-						</div>
-
-						<p class="noborder nomargin nopadding">Jérémie is an F# developer hailing from Paris, France. Follow him on <a href="https://twitter.com/thinkb4coding">Twitter</a> or at his personal blog, <a href="http://thinkbeforecoding.com/">Think Before Coding</a>.</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
-
+![secretplan](https://raw.github.com/aterrien/jQuery-Knob/master/secretplan.jpg)
 
 
 			<!-- FOOTER -->
